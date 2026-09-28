@@ -43,6 +43,50 @@ export function LaunchForm({ launch }: { launch?: Launch }) {
   const [state, setState] = useState<FormState>(initialStateFrom(launch));
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [brief, setBrief] = useState("");
+  const [drafting, setDrafting] = useState(false);
+  const [draftNote, setDraftNote] = useState<string | null>(null);
+
+  async function draftWithAi() {
+    if (!brief.trim()) {
+      setDraftNote("Write a one-line brief first.");
+      return;
+    }
+    if (state.channels.length === 0) {
+      setDraftNote("Select at least one channel first.");
+      return;
+    }
+    setDrafting(true);
+    setDraftNote(null);
+    try {
+      const res = await fetch("/api/draft", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ brief, channels: state.channels }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setDraftNote(data.error ?? "Could not draft content.");
+        return;
+      }
+      setState((s) => ({
+        ...s,
+        emailSubject: data.content.email?.subject ?? s.emailSubject,
+        emailBody: data.content.email?.body ?? s.emailBody,
+        whatsappMessage: data.content.whatsapp?.message ?? s.whatsappMessage,
+        socialCaption: data.content.social?.caption ?? s.socialCaption,
+      }));
+      setDraftNote(
+        data.usedRealAi
+          ? "Drafted with Claude — review before launching."
+          : "Drafted from a template (no ANTHROPIC_API_KEY set) — review before launching."
+      );
+    } catch {
+      setDraftNote("Could not reach the server.");
+    } finally {
+      setDrafting(false);
+    }
+  }
   const isEdit = Boolean(launch);
 
   function toggleChannel(channel: ChannelKey) {
@@ -142,6 +186,30 @@ export function LaunchForm({ launch }: { launch?: Launch }) {
             </label>
           ))}
         </div>
+      </div>
+
+      <div className="rounded-md border border-dashed border-indigo-200 bg-indigo-50/40 p-4">
+        <label className="block text-sm font-medium text-slate-700">
+          Draft content from a brief <span className="font-normal text-slate-400">(optional)</span>
+        </label>
+        <div className="mt-2 flex gap-2">
+          <input
+            type="text"
+            value={brief}
+            onChange={(e) => setBrief(e.target.value)}
+            placeholder="e.g. Spring collection is live, 20% off for the first week"
+            className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
+          />
+          <button
+            type="button"
+            onClick={draftWithAi}
+            disabled={drafting}
+            className="whitespace-nowrap rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
+          >
+            {drafting ? "Drafting…" : "Draft with AI"}
+          </button>
+        </div>
+        {draftNote && <p className="mt-2 text-xs text-slate-500">{draftNote}</p>}
       </div>
 
       {state.channels.includes("email") && (

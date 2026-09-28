@@ -1,5 +1,6 @@
 import { randomUUID } from "crypto";
 import {
+  ApprovalStatus,
   ChannelKey,
   ChannelOffsets,
   ChannelStatus,
@@ -17,6 +18,14 @@ function idleStatus(): ChannelStatus {
 
 function emptyChannelStatus(): Launch["channelStatus"] {
   return { email: idleStatus(), whatsapp: idleStatus(), social: idleStatus() };
+}
+
+function approvalsWithStatus(status: ApprovalStatus): Launch["channelApprovals"] {
+  return {
+    email: { status },
+    whatsapp: { status },
+    social: { status },
+  };
 }
 
 class LaunchStore {
@@ -50,6 +59,7 @@ class LaunchStore {
         createdAt: daysAgo(3),
         stage: "done",
         flags: [],
+        channelApprovals: approvalsWithStatus("approved"),
         channelStatus: {
           email: { state: "live", updatedAt: daysAgo(3), detail: "Delivered via Resend (historical)" },
           whatsapp: { state: "live", updatedAt: daysAgo(3), detail: "Simulated send" },
@@ -73,6 +83,7 @@ class LaunchStore {
         createdAt: daysAgo(6),
         stage: "done",
         flags: [],
+        channelApprovals: approvalsWithStatus("approved"),
         channelStatus: {
           email: { state: "live", updatedAt: daysAgo(6), detail: "Delivered via Resend (historical)" },
           whatsapp: idleStatus(),
@@ -100,6 +111,7 @@ class LaunchStore {
         createdAt: daysAgo(1),
         stage: "done",
         flags: [],
+        channelApprovals: approvalsWithStatus("approved"),
         channelStatus: {
           email: { state: "live", updatedAt: daysAgo(1), detail: "Delivered via Resend (historical)" },
           whatsapp: { state: "live", updatedAt: daysAgo(1), detail: "Simulated send" },
@@ -142,6 +154,7 @@ class LaunchStore {
       stage: "review",
       flags,
       channelStatus: emptyChannelStatus(),
+      channelApprovals: approvalsWithStatus("pending"),
     };
     this.launches.set(launch.id, launch);
     return launch;
@@ -169,6 +182,9 @@ class LaunchStore {
       offsets: input.offsets,
       scheduledFor: input.scheduledFor,
       flags,
+      // Content changed — any prior sign-off no longer applies, so every
+      // channel goes back to pending and must be re-approved.
+      channelApprovals: approvalsWithStatus("pending"),
     };
     this.launches.set(id, updated);
     return updated;
@@ -181,8 +197,22 @@ class LaunchStore {
     return launch;
   }
 
+  setApproval(
+    launchId: string,
+    channel: ChannelKey,
+    status: ApprovalStatus,
+    note?: string
+  ): Launch | undefined {
+    const launch = this.launches.get(launchId);
+    if (!launch || launch.stage !== "review") return launch;
+    launch.channelApprovals[channel] = { status, note };
+    return launch;
+  }
+
   canLaunch(launch: Launch): boolean {
-    return launch.flags.every((f) => f.acknowledged);
+    const flagsClear = launch.flags.every((f) => f.acknowledged);
+    const approved = launch.channels.every((c) => launch.channelApprovals[c].status === "approved");
+    return flagsClear && approved;
   }
 
   trigger(id: string): Launch | undefined {
@@ -264,7 +294,13 @@ export function progressSummary(launch: Launch): { liveOrDone: number; total: nu
   ).length;
   const failed = launch.channels.filter((c) => launch.channelStatus[c].state === "failed").length;
 
-  if (launch.stage === "review") return { liveOrDone, total, label: "Awaiting review" };
+  if (launch.stage === "review") {
+    const rejected = launch.channels.some((c) => launch.channelApprovals[c].status === "rejected");
+    const pendingApproval = launch.channels.some((c) => launch.channelApprovals[c].status === "pending");
+    if (rejected) return { liveOrDone, total, label: "Changes requested" };
+    if (pendingApproval) return { liveOrDone, total, label: "Awaiting approval" };
+    return { liveOrDone, total, label: "Awaiting review" };
+  }
   if (launch.stage === "launching") return { liveOrDone, total, label: `${liveOrDone}/${total} live` };
 
   if (failed > 0) return { liveOrDone, total, label: `${liveOrDone}/${total} live, ${failed} failed` };

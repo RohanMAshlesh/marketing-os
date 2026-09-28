@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import localFont from "next/font/local";
 import Link from "next/link";
+import { RoleSwitcher } from "@/components/RoleSwitcher";
 import "./globals.css";
 
 const geistSans = localFont({
@@ -38,12 +39,15 @@ export default function RootLayout({
                 <p className="text-xs leading-tight text-slate-500">Launch Hub</p>
               </div>
             </Link>
-            <Link
-              href="/launches/new"
-              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-            >
-              New Launch
-            </Link>
+            <div className="flex items-center gap-4">
+              <RoleSwitcher />
+              <Link
+                href="/launches/new"
+                className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+              >
+                New Launch
+              </Link>
+            </div>
           </div>
         </header>
         <main className="mx-auto max-w-5xl px-6 py-8">{children}</main>

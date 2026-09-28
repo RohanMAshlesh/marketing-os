@@ -46,6 +46,15 @@ export interface ReadinessFlag {
   acknowledged: boolean;
 }
 
+export type ApprovalStatus = "pending" | "approved" | "rejected";
+
+export interface ChannelApproval {
+  status: ApprovalStatus;
+  note?: string;
+}
+
+export type Role = "manager" | "approver";
+
 export interface Launch {
   id: string;
   name: string;
@@ -57,6 +66,7 @@ export interface Launch {
   stage: LaunchStage;
   flags: ReadinessFlag[];
   channelStatus: Record<ChannelKey, ChannelStatus>;
+  channelApprovals: Record<ChannelKey, ChannelApproval>;
 }
 
 export const CHANNEL_LABELS: Record<ChannelKey, string> = {

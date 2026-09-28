@@ -16,7 +16,10 @@ function relativeTime(iso: string): string {
 }
 
 function stageLabel(stage: string, progressLabel: string): { text: string; className: string } {
-  if (stage === "review") return { text: "Needs review", className: "bg-amber-100 text-amber-800" };
+  if (stage === "review") {
+    const className = progressLabel === "Changes requested" ? "bg-rose-100 text-rose-800" : "bg-amber-100 text-amber-800";
+    return { text: progressLabel, className };
+  }
   if (progressLabel.includes("failed"))
     return { text: progressLabel, className: "bg-rose-100 text-rose-800" };
   if (stage === "launching") return { text: progressLabel, className: "bg-blue-100 text-blue-800" };

@@ -14,6 +14,7 @@ import { useRole } from "@/lib/role";
 import { Badge } from "@/components/ui/Badge";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
+import { RocketIcon } from "@/components/ui/Icons";
 
 const STATE_STYLES: Record<ChannelState, { label: string; variant: Parameters<typeof Badge>[0]["variant"]; dot: string }> = {
   idle: { label: "Idle", variant: "neutral", dot: "bg-slate-300" },
@@ -234,7 +235,8 @@ function ReadinessCheck({
           </p>
           {error && <p className="mb-2 text-sm text-rose-700">{error}</p>}
           <Button onClick={onLaunch} disabled={!canLaunch || launching}>
-            {launching ? "Launching…" : canLaunch ? "🚀 Launch" : blockedReason}
+            {canLaunch && !launching && <RocketIcon className="h-4 w-4" />}
+            {launching ? "Launching…" : canLaunch ? "Launch" : blockedReason}
           </Button>
         </div>
       </Card>

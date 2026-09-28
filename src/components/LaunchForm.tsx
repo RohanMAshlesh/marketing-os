@@ -5,12 +5,9 @@ import { useState } from "react";
 import { ChannelKey, CHANNEL_LABELS, Launch } from "@/lib/types";
 import { Button } from "@/components/ui/Button";
 import { Input, Label, Textarea } from "@/components/ui/Field";
+import { CHANNEL_ICONS, SparklesIcon } from "@/components/ui/Icons";
 
-const ALL_CHANNELS: { key: ChannelKey; emoji: string }[] = [
-  { key: "email", emoji: "📧" },
-  { key: "whatsapp", emoji: "💬" },
-  { key: "social", emoji: "📣" },
-];
+const ALL_CHANNELS: ChannelKey[] = ["email", "whatsapp", "social"];
 
 interface FormState {
   name: string;
@@ -84,8 +81,8 @@ export function LaunchForm({ launch }: { launch?: Launch }) {
       }));
       setDraftNote(
         data.usedRealAi
-          ? "Drafted with Claude — review before launching."
-          : "Drafted from a template (no ANTHROPIC_API_KEY set) — review before launching."
+          ? "Drafted with AI — review before launching."
+          : "Drafted from a template (no OPENROUTER_API_KEY set, or the free model was unavailable) — review before launching."
       );
     } catch {
       setDraftNote("Could not reach the server.");
@@ -172,20 +169,21 @@ export function LaunchForm({ launch }: { launch?: Launch }) {
       <div>
         <Label>Channels</Label>
         <div className="flex gap-2">
-          {ALL_CHANNELS.map(({ key, emoji }) => {
+          {ALL_CHANNELS.map((key) => {
             const active = state.channels.includes(key);
+            const Icon = CHANNEL_ICONS[key];
             return (
               <button
                 key={key}
                 type="button"
                 onClick={() => toggleChannel(key)}
-                className={`flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                className={`flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors ${
                   active
-                    ? "border-indigo-300 bg-indigo-50 text-indigo-700"
+                    ? "border-indigo-200 bg-indigo-50 text-indigo-700"
                     : "border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50"
                 }`}
               >
-                <span>{emoji}</span>
+                <Icon className="h-4 w-4" />
                 {CHANNEL_LABELS[key]}
               </button>
             );
@@ -206,14 +204,15 @@ export function LaunchForm({ launch }: { launch?: Launch }) {
             className="bg-white"
           />
           <Button type="button" onClick={draftWithAi} disabled={drafting} className="whitespace-nowrap">
-            {drafting ? "Drafting…" : "✨ Draft with AI"}
+            <SparklesIcon className="h-4 w-4" />
+            {drafting ? "Drafting…" : "Draft with AI"}
           </Button>
         </div>
         {draftNote && <p className="mt-2 text-xs text-slate-500">{draftNote}</p>}
       </div>
 
       {state.channels.includes("email") && (
-        <ChannelSection title="Email" emoji="📧">
+        <ChannelSection title="Email" channel="email">
           <Input
             type="email"
             placeholder="Recipient (e.g. customers@example.com)"
@@ -241,7 +240,7 @@ export function LaunchForm({ launch }: { launch?: Launch }) {
       )}
 
       {state.channels.includes("whatsapp") && (
-        <ChannelSection title="WhatsApp" emoji="💬">
+        <ChannelSection title="WhatsApp" channel="whatsapp">
           <Textarea
             placeholder="Message"
             value={state.whatsappMessage}
@@ -257,7 +256,7 @@ export function LaunchForm({ launch }: { launch?: Launch }) {
       )}
 
       {state.channels.includes("social") && (
-        <ChannelSection title="Social" emoji="📣">
+        <ChannelSection title="Social" channel="social">
           <Textarea
             placeholder="Caption"
             value={state.socialCaption}
@@ -311,17 +310,18 @@ export function LaunchForm({ launch }: { launch?: Launch }) {
 
 function ChannelSection({
   title,
-  emoji,
+  channel,
   children,
 }: {
   title: string;
-  emoji: string;
+  channel: ChannelKey;
   children: React.ReactNode;
 }) {
+  const Icon = CHANNEL_ICONS[channel];
   return (
     <div className="rounded-lg border border-slate-200 p-4">
       <p className="mb-3 flex items-center gap-1.5 text-sm font-medium text-slate-700">
-        <span>{emoji}</span> {title}
+        <Icon className="h-4 w-4 text-slate-400" /> {title}
       </p>
       <div className="space-y-3">{children}</div>
     </div>

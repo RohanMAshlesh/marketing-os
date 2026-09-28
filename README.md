@@ -19,10 +19,11 @@ npm run dev
 
 Open http://localhost:3000 — you'll land on the login screen first (this
 gates the whole app from the very first request, not just individual
-launches). The code is **3141**, the first four digits of pi, and it's
-stated right there on the screen since this is a demo gate, not real
-security. Once in, the dashboard comes pre-seeded with 3 example past
-launches so it's never empty.
+launches). Enter any email or phone number, then the 4-digit code: it's
+**3141**, the first four digits of pi (the login screen only hints at
+this, it doesn't spell it out — this README can, for setup purposes). Once
+in, the dashboard comes pre-seeded with 3 example past launches so it's
+never empty.
 
 ## Tests
 
@@ -54,22 +55,25 @@ WhatsApp and Social are fully simulated in this MVP — see
 [`outputs/08-prototype-plan/prototype-plan.md`](outputs/08-prototype-plan/prototype-plan.md)
 for why, and the roadmap for when that changes.
 
-## AI content drafting & the Ask box (optional real AI)
+## AI content drafting & the Ask box (optional real AI, via OpenRouter)
 
 Both the "Draft with AI" button (New Launch form) and the "Ask about this
 launch" box (Status Board) work with **zero setup** using a deterministic
-fallback. To use real Claude generation instead, set `ANTHROPIC_API_KEY` in
-`.env.local` — **this is the one feature that costs real money per call** if
-enabled; everything else in the app stays $0 regardless.
+fallback. To use a real model instead, set `OPENROUTER_API_KEY` in
+`.env.local` — [OpenRouter](https://openrouter.ai) gives free access to
+several models, so this stays genuinely $0. The app tries a short list of
+free models in order (shared free pools get rate-limited unpredictably) and
+falls back to the template for whichever channels it couldn't fill in.
 
-## Approval workflow (role switcher, not real per-user accounts)
+## Approval workflow (role dropdown, not real per-user accounts)
 
 Every channel's content must be **approved** before a Launch can fire.
 The app-wide login above is just a demo gate, not per-user accounts, so
-inside the app use the **"Viewing as"** switcher in the header to flip
-between **Manager** (creates/edits content, can't self-approve) and
-**Approver** (approves or requests changes) to demo both sides of the
-workflow yourself.
+inside the app use the **"Viewing as"** dropdown in the header to switch
+between **Manager view** (creates/edits content, can't self-approve) and
+**Approver view** (approves or requests changes, sees a "needs your
+approval" queue on the dashboard) — selecting one re-renders the current
+page for that role immediately.
 
 ## Demo script
 
@@ -80,8 +84,8 @@ workflow yourself.
    → will trigger the compliance-keyword flag.
 5. Set the Social **offset to 25** (minutes) → triggers the timing-skew flag.
 6. Submit → the Readiness Check screen shows both flags, and every channel is "Awaiting approval."
-7. Switch **Viewing as → Approver** in the header, click **Approve** on each channel.
-8. Switch back to **Campaign Manager**, click **Acknowledge** on each flag, then **Launch**.
+7. Switch the **Viewing as** dropdown to **Approver view**, click **Approve** on each channel.
+8. Switch back to **Manager view**, click **Acknowledge** on each flag, then **Launch**.
 9. Watch the Status Board hit **3/3 live** within a few seconds — the value moment.
 10. Try the **Ask about this launch** box, e.g. "did anything fail?"
 11. Go back to the dashboard to see it listed in history.
@@ -92,9 +96,9 @@ workflow yourself.
 - `src/lib/store.ts` — in-memory data store, seed data, launch scheduler/ticker, approval gating
 - `src/lib/readiness.ts` — the readiness-check rule engine
 - `src/lib/connectors.ts` — channel "sends" (real email, simulated WhatsApp/social)
-- `src/lib/ai.ts` — content drafting + status Q&A (real Claude call or free fallback)
-- `src/lib/role.ts` + `src/components/RoleSwitcher.tsx` — the manager/approver demo switcher
-- `src/components/ui/*` — the small shared design system (Button, Badge, Card, Input/Textarea/Label)
+- `src/lib/ai.ts` — content drafting + status Q&A (OpenRouter free models, or a deterministic fallback)
+- `src/lib/role.ts` + `src/components/RoleSwitcher.tsx` — the manager/approver view dropdown
+- `src/components/ui/*` — the small shared design system (Button, Badge, Card, Input/Textarea/Label, Icons)
 - `src/app/api/launches/*`, `src/app/api/draft/*`, `src/app/api/auth/*` — REST-ish API routes
 - `src/app/(pages)` + `src/components/LaunchForm.tsx` / `LaunchView.tsx` — UI
 - `src/**/*.test.ts` — the Vitest suite (see [`TESTING.md`](TESTING.md))

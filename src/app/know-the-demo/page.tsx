@@ -23,18 +23,20 @@ export default function KnowTheDemoPage() {
         </Section>
 
         <Section title="AI draft">
-          That line goes to Claude, which writes a first version for every
-          channel you picked: email subject and body, a WhatsApp message, a
-          social caption. If there&apos;s no API key set up, it still works,
-          just with plain template copy instead. Either way, you&apos;re
-          editing it before anything goes out, not shipping it blind.
+          That line goes out to a free model through OpenRouter, which writes
+          a first version for every channel you picked: email subject and
+          body, a WhatsApp message, a social caption. Free shared models get
+          rate-limited without much warning, so if the request fails or
+          there&apos;s no key set up, it falls back to plain template copy
+          instead. Either way, you&apos;re editing it before anything goes
+          out, not shipping it blind.
         </Section>
 
         <Section title="Approve">
           Someone other than whoever wrote it has to sign off, channel by
-          channel. In this demo that&apos;s the role switcher in the top bar,
-          flip it to Approver to see the other side. On a real team this
-          would be whoever owns brand or legal.
+          channel. In this demo that&apos;s the dropdown in the top bar, pick
+          Approver view to see the other side. On a real team this would be
+          whoever owns brand or legal.
         </Section>
 
         <Section title="Readiness check">
@@ -64,19 +66,20 @@ export default function KnowTheDemoPage() {
           Worth being straight about this: email is the only channel that
           can genuinely send something. WhatsApp and social are simulated
           well enough to demo convincingly, but they&apos;re not wired into
-          real accounts. The AI drafting works with a real Claude call if
-          you add an API key, and with a template if you don&apos;t. Either
-          way you&apos;re meant to edit before you launch, not trust it
-          blindly. None of this is hidden. It&apos;s a deliberate choice
-          about where to spend the time on a first version, not a corner we
-          forgot about.
+          real accounts. The AI drafting calls a real free model through
+          OpenRouter when one is available and answers with a template
+          otherwise. Either way you&apos;re meant to edit before you launch,
+          not trust it blindly. None of this is hidden. It&apos;s a
+          deliberate choice about where to spend the time on a first
+          version, not a corner we forgot about.
         </Section>
 
         <Section title="One more thing">
-          The login on this app is a demo gate, not real security. The code
-          is 3141, the first four digits of pi. We&apos;re not protecting
-          anything sensitive here, just making it feel like something you
-          sign into rather than a public page.
+          The sign-in here asks for an email or phone number and a 4-digit
+          code, like a real product would, but it&apos;s a demo gate, not
+          real security. Nothing actually gets texted or emailed to you.
+          If you get stuck on the code, it&apos;s a well-known number: the
+          first four digits of pi.
         </Section>
 
         <Section title="What's next">

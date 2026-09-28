@@ -3,7 +3,7 @@ import { WorkflowDiagram } from "@/components/WorkflowDiagram";
 export default function KnowTheDemoPage() {
   return (
     <div className="mx-auto max-w-3xl">
-      <h1 className="mb-4 text-2xl font-semibold">How this actually works</h1>
+      <h1 className="mb-4 text-2xl font-semibold tracking-tight">How this actually works</h1>
       <p className="mb-8 text-sm leading-relaxed text-slate-600">
         Most marketing teams don&apos;t have one campaign problem, they have a
         five-tool problem. The brief lives in a doc somewhere, the copy gets

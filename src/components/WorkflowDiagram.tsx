@@ -29,7 +29,7 @@ function delayFor(leftPercent: number): string {
 
 export function WorkflowDiagram() {
   return (
-    <div className="rounded-lg border border-slate-200 bg-white p-8">
+    <div className="card bg-gradient-to-b from-slate-50/60 to-white p-8">
       <div className="relative h-24">
         {/* track */}
         <div className="absolute left-0 right-0 top-8 h-0.5 rounded-full bg-slate-200" />

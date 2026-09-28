@@ -1,6 +1,9 @@
 import Link from "next/link";
 import { store, progressSummary } from "@/lib/store";
 import { CHANNEL_LABELS } from "@/lib/types";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 
 export const dynamic = "force-dynamic";
 
@@ -15,15 +18,13 @@ function relativeTime(iso: string): string {
   return `${days}d ago`;
 }
 
-function stageLabel(stage: string, progressLabel: string): { text: string; className: string } {
+function stageBadge(stage: string, progressLabel: string): { text: string; variant: Parameters<typeof Badge>[0]["variant"] } {
   if (stage === "review") {
-    const className = progressLabel === "Changes requested" ? "bg-rose-100 text-rose-800" : "bg-amber-100 text-amber-800";
-    return { text: progressLabel, className };
+    return { text: progressLabel, variant: progressLabel === "Changes requested" ? "danger" : "warning" };
   }
-  if (progressLabel.includes("failed"))
-    return { text: progressLabel, className: "bg-rose-100 text-rose-800" };
-  if (stage === "launching") return { text: progressLabel, className: "bg-blue-100 text-blue-800" };
-  return { text: progressLabel, className: "bg-emerald-100 text-emerald-800" };
+  if (progressLabel.includes("failed")) return { text: progressLabel, variant: "danger" };
+  if (stage === "launching") return { text: progressLabel, variant: "info" };
+  return { text: progressLabel, variant: "success" };
 }
 
 export default function DashboardPage() {
@@ -31,63 +32,97 @@ export default function DashboardPage() {
 
   if (launches.length === 0) {
     return (
-      <div className="rounded-lg border border-dashed border-slate-300 bg-white p-12 text-center">
+      <Card className="border-dashed py-16 text-center">
         <h1 className="text-lg font-semibold">No launches yet</h1>
-        <p className="mt-1 text-sm text-slate-500">
+        <p className="mx-auto mt-1 max-w-sm text-sm text-slate-500">
           Create your first Launch to schedule content across every channel from one place.
         </p>
-        <Link
-          href="/launches/new"
-          className="mt-4 inline-block rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
-        >
-          Create your first Launch
+        <Link href="/launches/new" className="mt-5 inline-block">
+          <Button>Create your first Launch</Button>
         </Link>
-      </div>
+      </Card>
     );
   }
+
+  const needsApproval = launches.filter((l) => l.stage === "review").length;
+  const inProgress = launches.filter((l) => l.stage === "launching").length;
+  const hasFailures = launches.filter((l) => progressSummary(l).label.includes("failed")).length;
 
   return (
     <div>
       <div className="mb-6 flex items-baseline justify-between">
-        <h1 className="text-xl font-semibold">Launches</h1>
-        <p className="text-sm text-slate-500">{launches.length} total</p>
+        <h1 className="text-xl font-semibold tracking-tight">Launches</h1>
+        <Link href="/launches/new" className="sm:hidden">
+          <Button size="sm">New Launch</Button>
+        </Link>
       </div>
-      <div className="overflow-hidden rounded-lg border border-slate-200 bg-white">
+
+      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <Stat label="Total" value={launches.length} />
+        <Stat label="Needs approval" value={needsApproval} tone={needsApproval > 0 ? "warning" : undefined} />
+        <Stat label="In progress" value={inProgress} tone={inProgress > 0 ? "info" : undefined} />
+        <Stat label="With failures" value={hasFailures} tone={hasFailures > 0 ? "danger" : undefined} />
+      </div>
+
+      <Card padded={false} className="overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="border-b border-slate-200 bg-slate-50 text-left text-xs uppercase tracking-wide text-slate-500">
+          <thead className="border-b border-slate-200 bg-slate-50/60 text-left text-xs uppercase tracking-wide text-slate-500">
             <tr>
-              <th className="px-4 py-3 font-medium">Launch</th>
-              <th className="px-4 py-3 font-medium">Channels</th>
-              <th className="px-4 py-3 font-medium">Status</th>
-              <th className="px-4 py-3 font-medium">Created</th>
+              <th className="px-5 py-3 font-medium">Launch</th>
+              <th className="px-5 py-3 font-medium">Channels</th>
+              <th className="px-5 py-3 font-medium">Status</th>
+              <th className="px-5 py-3 font-medium">Created</th>
             </tr>
           </thead>
           <tbody>
             {launches.map((launch) => {
               const progress = progressSummary(launch);
-              const badge = stageLabel(launch.stage, progress.label);
+              const badge = stageBadge(launch.stage, progress.label);
               return (
                 <tr key={launch.id} className="border-b border-slate-100 last:border-0 hover:bg-slate-50">
-                  <td className="px-4 py-3">
-                    <Link href={`/launches/${launch.id}`} className="font-medium text-indigo-600 hover:underline">
+                  <td className="px-5 py-3.5">
+                    <Link href={`/launches/${launch.id}`} className="font-medium text-slate-900 hover:text-indigo-600">
                       {launch.name}
                     </Link>
                   </td>
-                  <td className="px-4 py-3 text-slate-600">
+                  <td className="px-5 py-3.5 text-slate-500">
                     {launch.channels.map((c) => CHANNEL_LABELS[c]).join(", ")}
                   </td>
-                  <td className="px-4 py-3">
-                    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${badge.className}`}>
-                      {badge.text}
-                    </span>
+                  <td className="px-5 py-3.5">
+                    <Badge variant={badge.variant}>{badge.text}</Badge>
                   </td>
-                  <td className="px-4 py-3 text-slate-500">{relativeTime(launch.createdAt)}</td>
+                  <td className="px-5 py-3.5 text-slate-400">{relativeTime(launch.createdAt)}</td>
                 </tr>
               );
             })}
           </tbody>
         </table>
-      </div>
+      </Card>
     </div>
+  );
+}
+
+function Stat({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone?: "warning" | "info" | "danger";
+}) {
+  const toneClass =
+    tone === "warning"
+      ? "text-amber-600"
+      : tone === "info"
+      ? "text-blue-600"
+      : tone === "danger"
+      ? "text-rose-600"
+      : "text-slate-900";
+  return (
+    <Card className="p-4">
+      <p className="text-xs text-slate-400">{label}</p>
+      <p className={`mt-1 text-2xl font-semibold tabular-nums ${toneClass}`}>{value}</p>
+    </Card>
   );
 }

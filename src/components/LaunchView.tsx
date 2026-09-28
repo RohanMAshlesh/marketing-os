@@ -11,19 +11,28 @@ import {
   ReadinessFlag,
 } from "@/lib/types";
 import { useRole } from "@/lib/role";
+import { Badge } from "@/components/ui/Badge";
+import { Button } from "@/components/ui/Button";
+import { Card } from "@/components/ui/Card";
 
-const STATE_STYLES: Record<ChannelState, { label: string; className: string; dot: string }> = {
-  idle: { label: "Idle", className: "bg-slate-100 text-slate-500", dot: "bg-slate-400" },
-  scheduled: { label: "Scheduled", className: "bg-blue-100 text-blue-700", dot: "bg-blue-500" },
-  pending: { label: "Sending…", className: "bg-amber-100 text-amber-800", dot: "bg-amber-500 animate-pulse" },
-  live: { label: "Live", className: "bg-emerald-100 text-emerald-800", dot: "bg-emerald-500" },
-  failed: { label: "Failed", className: "bg-rose-100 text-rose-800", dot: "bg-rose-500" },
+const STATE_STYLES: Record<ChannelState, { label: string; variant: Parameters<typeof Badge>[0]["variant"]; dot: string }> = {
+  idle: { label: "Idle", variant: "neutral", dot: "bg-slate-300" },
+  scheduled: { label: "Scheduled", variant: "info", dot: "bg-blue-500" },
+  pending: { label: "Sending…", variant: "warning", dot: "bg-amber-500 animate-pulse" },
+  live: { label: "Live", variant: "success", dot: "bg-emerald-500" },
+  failed: { label: "Failed", variant: "danger", dot: "bg-rose-500" },
 };
 
-const APPROVAL_STYLES: Record<ApprovalStatus, { label: string; className: string }> = {
-  pending: { label: "Awaiting approval", className: "bg-amber-100 text-amber-800" },
-  approved: { label: "Approved", className: "bg-emerald-100 text-emerald-800" },
-  rejected: { label: "Changes requested", className: "bg-rose-100 text-rose-800" },
+const APPROVAL_VARIANT: Record<ApprovalStatus, Parameters<typeof Badge>[0]["variant"]> = {
+  pending: "warning",
+  approved: "success",
+  rejected: "danger",
+};
+
+const APPROVAL_LABEL: Record<ApprovalStatus, string> = {
+  pending: "Awaiting approval",
+  approved: "Approved",
+  rejected: "Changes requested",
 };
 
 function formatTime(iso: string): string {
@@ -142,13 +151,13 @@ function ReadinessCheck({
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-6 flex items-baseline justify-between">
-        <h1 className="text-xl font-semibold">{launch.name}</h1>
-        <Link href={`/launches/${launch.id}/edit`} className="text-sm text-indigo-600 hover:underline">
+        <h1 className="text-xl font-semibold tracking-tight">{launch.name}</h1>
+        <Link href={`/launches/${launch.id}/edit`} className="text-sm text-indigo-600 hover:text-indigo-700 hover:underline">
           Edit content
         </Link>
       </div>
 
-      <div className="mb-6 rounded-lg border border-slate-200 bg-white p-6">
+      <Card className="mb-6">
         <div className="mb-3 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-700">Content approval</h2>
           <span className="text-xs text-slate-400">
@@ -158,41 +167,32 @@ function ReadinessCheck({
         <ul className="space-y-2">
           {launch.channels.map((channel) => {
             const approval = launch.channelApprovals[channel];
-            const style = APPROVAL_STYLES[approval.status];
             return (
               <li
                 key={channel}
-                className="flex items-center justify-between rounded-md border border-slate-100 p-3 text-sm"
+                className="flex items-center justify-between rounded-lg border border-slate-100 bg-slate-50/50 p-3 text-sm"
               >
                 <span className="font-medium">{CHANNEL_LABELS[channel]}</span>
                 <div className="flex items-center gap-2">
-                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${style.className}`}>
-                    {style.label}
-                  </span>
+                  <Badge variant={APPROVAL_VARIANT[approval.status]}>{APPROVAL_LABEL[approval.status]}</Badge>
                   {role === "approver" && approval.status !== "approved" && (
-                    <button
-                      onClick={() => onSetApproval(channel, "approved")}
-                      className="rounded-md border border-emerald-300 px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50"
-                    >
+                    <Button size="sm" variant="secondary" className="!border-emerald-300 !text-emerald-700 hover:!bg-emerald-50" onClick={() => onSetApproval(channel, "approved")}>
                       Approve
-                    </button>
+                    </Button>
                   )}
                   {role === "approver" && approval.status !== "rejected" && (
-                    <button
-                      onClick={() => onSetApproval(channel, "rejected")}
-                      className="rounded-md border border-rose-300 px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-50"
-                    >
+                    <Button size="sm" variant="danger" onClick={() => onSetApproval(channel, "rejected")}>
                       Request changes
-                    </button>
+                    </Button>
                   )}
                 </div>
               </li>
             );
           })}
         </ul>
-      </div>
+      </Card>
 
-      <div className="rounded-lg border border-slate-200 bg-white p-6">
+      <Card>
         <h2 className="mb-1 text-sm font-semibold text-slate-700">Readiness check</h2>
         {launch.flags.length === 0 ? (
           <p className="text-sm text-emerald-700">No issues found.</p>
@@ -201,7 +201,7 @@ function ReadinessCheck({
             {launch.flags.map((flag: ReadinessFlag) => (
               <li
                 key={flag.id}
-                className={`flex items-start justify-between gap-4 rounded-md border p-3 text-sm ${
+                className={`flex items-start justify-between gap-4 rounded-lg border p-3 text-sm ${
                   flag.acknowledged
                     ? "border-slate-200 bg-slate-50 text-slate-400"
                     : flag.severity === "blocker"
@@ -216,12 +216,9 @@ function ReadinessCheck({
                   {flag.message}
                 </span>
                 {!flag.acknowledged && (
-                  <button
-                    onClick={() => onAcknowledge(flag.id)}
-                    className="shrink-0 whitespace-nowrap rounded-md border border-current px-2 py-1 text-xs font-medium"
-                  >
+                  <Button size="sm" variant="secondary" className="shrink-0 whitespace-nowrap" onClick={() => onAcknowledge(flag.id)}>
                     Acknowledge
-                  </button>
+                  </Button>
                 )}
               </li>
             ))}
@@ -229,22 +226,18 @@ function ReadinessCheck({
         )}
 
         <div className="mt-6 border-t border-slate-100 pt-4">
-          <p className="mb-2 text-xs text-slate-500">
+          <p className="mb-3 text-xs text-slate-500">
             Channels: {launch.channels.map((c) => CHANNEL_LABELS[c]).join(", ")}
             {launch.scheduledFor
               ? ` · scheduled for ${new Date(launch.scheduledFor).toLocaleString()}`
               : " · launching immediately"}
           </p>
           {error && <p className="mb-2 text-sm text-rose-700">{error}</p>}
-          <button
-            onClick={onLaunch}
-            disabled={!canLaunch || launching}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-40"
-          >
-            {launching ? "Launching…" : canLaunch ? "Launch" : blockedReason}
-          </button>
+          <Button onClick={onLaunch} disabled={!canLaunch || launching}>
+            {launching ? "Launching…" : canLaunch ? "🚀 Launch" : blockedReason}
+          </Button>
         </div>
-      </div>
+      </Card>
     </div>
   );
 }
@@ -258,27 +251,29 @@ function StatusBoard({ launch }: { launch: Launch }) {
   return (
     <div className="mx-auto max-w-2xl">
       <div className="mb-6">
-        <h1 className="text-xl font-semibold">{launch.name}</h1>
+        <h1 className="text-xl font-semibold tracking-tight">{launch.name}</h1>
         <p className="text-sm text-slate-500">
           {launch.stage === "done" ? "Completed" : "In progress"} ·{" "}
           {new Date(launch.createdAt).toLocaleString()}
         </p>
       </div>
 
-      <div className="mb-6 rounded-lg border border-slate-200 bg-white p-6">
+      <Card className="mb-6">
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-sm font-semibold text-slate-700">Status board</h2>
-          <span
-            className={`rounded-full px-3 py-1 text-sm font-semibold ${
-              failed > 0
-                ? "bg-rose-100 text-rose-800"
-                : resolved === total
-                ? "bg-emerald-100 text-emerald-800"
-                : "bg-blue-100 text-blue-800"
-            }`}
+          <Badge
+            variant={failed > 0 ? "danger" : resolved === total ? "success" : "info"}
+            className="px-3 py-1 text-sm font-semibold"
           >
             {live}/{total} live{failed > 0 ? `, ${failed} failed` : ""}
-          </span>
+          </Badge>
+        </div>
+
+        <div className="mb-5 h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+          <div
+            className={`h-full rounded-full transition-all duration-500 ${failed > 0 ? "bg-rose-500" : "bg-emerald-500"}`}
+            style={{ width: `${total === 0 ? 0 : (resolved / total) * 100}%` }}
+          />
         </div>
 
         <div className="space-y-3">
@@ -288,7 +283,7 @@ function StatusBoard({ launch }: { launch: Launch }) {
             return (
               <div
                 key={channel}
-                className="flex items-center justify-between rounded-md border border-slate-100 p-3"
+                className="flex items-center justify-between rounded-lg border border-slate-100 p-3"
               >
                 <div className="flex items-center gap-3">
                   <span className={`h-2.5 w-2.5 rounded-full ${style.dot}`} />
@@ -298,20 +293,18 @@ function StatusBoard({ launch }: { launch: Launch }) {
                   </div>
                 </div>
                 <div className="text-right">
-                  <span className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${style.className}`}>
-                    {style.label}
-                  </span>
+                  <Badge variant={style.variant}>{style.label}</Badge>
                   <p className="mt-0.5 text-[11px] text-slate-400">{formatTime(status.updatedAt)}</p>
                 </div>
               </div>
             );
           })}
         </div>
-      </div>
+      </Card>
 
       <AskBox launchId={launch.id} />
 
-      <Link href="/" className="mt-6 inline-block text-sm text-indigo-600 hover:underline">
+      <Link href="/" className="mt-2 inline-block text-sm text-indigo-600 hover:text-indigo-700 hover:underline">
         ← Back to dashboard
       </Link>
     </div>
@@ -342,7 +335,7 @@ function AskBox({ launchId }: { launchId: string }) {
   }
 
   return (
-    <div className="mb-6 rounded-lg border border-slate-200 bg-white p-6">
+    <Card className="mb-6">
       <h2 className="mb-3 text-sm font-semibold text-slate-700">Ask about this launch</h2>
       {history.length > 0 && (
         <ul className="mb-3 space-y-2 text-sm">
@@ -361,16 +354,12 @@ function AskBox({ launchId }: { launchId: string }) {
           onChange={(e) => setQuestion(e.target.value)}
           onKeyDown={(e) => e.key === "Enter" && ask()}
           placeholder='e.g. "did anything fail?"'
-          className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
+          className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/20"
         />
-        <button
-          onClick={ask}
-          disabled={asking}
-          className="rounded-md bg-slate-800 px-3 py-2 text-sm font-medium text-white hover:bg-slate-900 disabled:opacity-50"
-        >
+        <Button variant="secondary" onClick={ask} disabled={asking}>
           {asking ? "Asking…" : "Ask"}
-        </button>
+        </Button>
       </div>
-    </div>
+    </Card>
   );
 }

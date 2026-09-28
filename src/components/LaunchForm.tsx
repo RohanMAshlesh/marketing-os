@@ -3,8 +3,14 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { ChannelKey, CHANNEL_LABELS, Launch } from "@/lib/types";
+import { Button } from "@/components/ui/Button";
+import { Input, Label, Textarea } from "@/components/ui/Field";
 
-const ALL_CHANNELS: ChannelKey[] = ["email", "whatsapp", "social"];
+const ALL_CHANNELS: { key: ChannelKey; emoji: string }[] = [
+  { key: "email", emoji: "📧" },
+  { key: "whatsapp", emoji: "💬" },
+  { key: "social", emoji: "📣" },
+];
 
 interface FormState {
   name: string;
@@ -154,163 +160,141 @@ export function LaunchForm({ launch }: { launch?: Launch }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div>
-        <label className="block text-sm font-medium text-slate-700">Launch name</label>
-        <input
+        <Label>Launch name</Label>
+        <Input
           type="text"
           value={state.name}
           onChange={(e) => setState((s) => ({ ...s, name: e.target.value }))}
           placeholder="e.g. Spring Collection Launch"
-          className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
         />
       </div>
 
       <div>
-        <label className="block text-sm font-medium text-slate-700">Channels</label>
-        <div className="mt-2 flex gap-3">
-          {ALL_CHANNELS.map((channel) => (
-            <label
-              key={channel}
-              className={`cursor-pointer rounded-md border px-3 py-2 text-sm ${
-                state.channels.includes(channel)
-                  ? "border-indigo-500 bg-indigo-50 text-indigo-700"
-                  : "border-slate-300 text-slate-600"
-              }`}
-            >
-              <input
-                type="checkbox"
-                checked={state.channels.includes(channel)}
-                onChange={() => toggleChannel(channel)}
-                className="mr-2"
-              />
-              {CHANNEL_LABELS[channel]}
-            </label>
-          ))}
+        <Label>Channels</Label>
+        <div className="flex gap-2">
+          {ALL_CHANNELS.map(({ key, emoji }) => {
+            const active = state.channels.includes(key);
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => toggleChannel(key)}
+                className={`flex items-center gap-1.5 rounded-md border px-3 py-2 text-sm font-medium transition-colors ${
+                  active
+                    ? "border-indigo-300 bg-indigo-50 text-indigo-700"
+                    : "border-slate-200 text-slate-500 hover:border-slate-300 hover:bg-slate-50"
+                }`}
+              >
+                <span>{emoji}</span>
+                {CHANNEL_LABELS[key]}
+              </button>
+            );
+          })}
         </div>
       </div>
 
-      <div className="rounded-md border border-dashed border-indigo-200 bg-indigo-50/40 p-4">
-        <label className="block text-sm font-medium text-slate-700">
+      <div className="rounded-lg border border-indigo-100 bg-gradient-to-br from-indigo-50/70 to-violet-50/40 p-4">
+        <Label className="mb-1">
           Draft content from a brief <span className="font-normal text-slate-400">(optional)</span>
-        </label>
-        <div className="mt-2 flex gap-2">
-          <input
+        </Label>
+        <div className="flex gap-2">
+          <Input
             type="text"
             value={brief}
             onChange={(e) => setBrief(e.target.value)}
             placeholder="e.g. Spring collection is live, 20% off for the first week"
-            className="flex-1 rounded-md border border-slate-300 px-3 py-2 text-sm"
+            className="bg-white"
           />
-          <button
-            type="button"
-            onClick={draftWithAi}
-            disabled={drafting}
-            className="whitespace-nowrap rounded-md bg-indigo-600 px-3 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-          >
-            {drafting ? "Drafting…" : "Draft with AI"}
-          </button>
+          <Button type="button" onClick={draftWithAi} disabled={drafting} className="whitespace-nowrap">
+            {drafting ? "Drafting…" : "✨ Draft with AI"}
+          </Button>
         </div>
         {draftNote && <p className="mt-2 text-xs text-slate-500">{draftNote}</p>}
       </div>
 
       {state.channels.includes("email") && (
-        <fieldset className="rounded-md border border-slate-200 p-4">
-          <legend className="px-1 text-sm font-medium text-slate-700">Email</legend>
-          <div className="space-y-3">
-            <input
-              type="email"
-              placeholder="Recipient (e.g. customers@example.com)"
-              value={state.emailTo}
-              onChange={(e) => setState((s) => ({ ...s, emailTo: e.target.value }))}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-            />
-            <input
-              type="text"
-              placeholder="Subject"
-              value={state.emailSubject}
-              onChange={(e) => setState((s) => ({ ...s, emailSubject: e.target.value }))}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-            />
-            <textarea
-              placeholder="Body"
-              value={state.emailBody}
-              onChange={(e) => setState((s) => ({ ...s, emailBody: e.target.value }))}
-              rows={3}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-            />
-            <OffsetInput
-              label="Send offset (minutes from launch time)"
-              value={state.offsetEmail}
-              onChange={(v) => setState((s) => ({ ...s, offsetEmail: v }))}
-            />
-          </div>
-        </fieldset>
+        <ChannelSection title="Email" emoji="📧">
+          <Input
+            type="email"
+            placeholder="Recipient (e.g. customers@example.com)"
+            value={state.emailTo}
+            onChange={(e) => setState((s) => ({ ...s, emailTo: e.target.value }))}
+          />
+          <Input
+            type="text"
+            placeholder="Subject"
+            value={state.emailSubject}
+            onChange={(e) => setState((s) => ({ ...s, emailSubject: e.target.value }))}
+          />
+          <Textarea
+            placeholder="Body"
+            value={state.emailBody}
+            onChange={(e) => setState((s) => ({ ...s, emailBody: e.target.value }))}
+            rows={3}
+          />
+          <OffsetInput
+            label="Send offset (minutes from launch time)"
+            value={state.offsetEmail}
+            onChange={(v) => setState((s) => ({ ...s, offsetEmail: v }))}
+          />
+        </ChannelSection>
       )}
 
       {state.channels.includes("whatsapp") && (
-        <fieldset className="rounded-md border border-slate-200 p-4">
-          <legend className="px-1 text-sm font-medium text-slate-700">WhatsApp</legend>
-          <div className="space-y-3">
-            <textarea
-              placeholder="Message"
-              value={state.whatsappMessage}
-              onChange={(e) => setState((s) => ({ ...s, whatsappMessage: e.target.value }))}
-              rows={3}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-            />
-            <OffsetInput
-              label="Send offset (minutes from launch time)"
-              value={state.offsetWhatsapp}
-              onChange={(v) => setState((s) => ({ ...s, offsetWhatsapp: v }))}
-            />
-          </div>
-        </fieldset>
+        <ChannelSection title="WhatsApp" emoji="💬">
+          <Textarea
+            placeholder="Message"
+            value={state.whatsappMessage}
+            onChange={(e) => setState((s) => ({ ...s, whatsappMessage: e.target.value }))}
+            rows={3}
+          />
+          <OffsetInput
+            label="Send offset (minutes from launch time)"
+            value={state.offsetWhatsapp}
+            onChange={(v) => setState((s) => ({ ...s, offsetWhatsapp: v }))}
+          />
+        </ChannelSection>
       )}
 
       {state.channels.includes("social") && (
-        <fieldset className="rounded-md border border-slate-200 p-4">
-          <legend className="px-1 text-sm font-medium text-slate-700">Social</legend>
-          <div className="space-y-3">
-            <textarea
-              placeholder="Caption"
-              value={state.socialCaption}
-              onChange={(e) => setState((s) => ({ ...s, socialCaption: e.target.value }))}
-              rows={3}
-              className="w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
-            />
-            <OffsetInput
-              label="Post offset (minutes from launch time)"
-              value={state.offsetSocial}
-              onChange={(v) => setState((s) => ({ ...s, offsetSocial: v }))}
-            />
-          </div>
-        </fieldset>
+        <ChannelSection title="Social" emoji="📣">
+          <Textarea
+            placeholder="Caption"
+            value={state.socialCaption}
+            onChange={(e) => setState((s) => ({ ...s, socialCaption: e.target.value }))}
+            rows={3}
+          />
+          <OffsetInput
+            label="Post offset (minutes from launch time)"
+            value={state.offsetSocial}
+            onChange={(v) => setState((s) => ({ ...s, offsetSocial: v }))}
+          />
+        </ChannelSection>
       )}
 
       <div>
-        <label className="block text-sm font-medium text-slate-700">When</label>
-        <div className="mt-2 flex items-center gap-4 text-sm">
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              checked={state.when === "now"}
-              onChange={() => setState((s) => ({ ...s, when: "now" }))}
-            />
-            Launch now
-          </label>
-          <label className="flex items-center gap-2">
-            <input
-              type="radio"
-              checked={state.when === "later"}
-              onChange={() => setState((s) => ({ ...s, when: "later" }))}
-            />
-            Schedule for later
-          </label>
+        <Label>When</Label>
+        <div className="flex items-center gap-4 text-sm">
+          <div className="flex rounded-md border border-slate-200 bg-slate-100 p-0.5">
+            {(["now", "later"] as const).map((opt) => (
+              <button
+                key={opt}
+                type="button"
+                onClick={() => setState((s) => ({ ...s, when: opt }))}
+                className={`rounded px-3 py-1.5 text-sm font-medium transition-colors ${
+                  state.when === opt ? "bg-white text-slate-900 shadow-sm" : "text-slate-500 hover:text-slate-700"
+                }`}
+              >
+                {opt === "now" ? "Launch now" : "Schedule for later"}
+              </button>
+            ))}
+          </div>
           {state.when === "later" && (
             <input
               type="datetime-local"
               value={state.scheduledFor}
               onChange={(e) => setState((s) => ({ ...s, scheduledFor: e.target.value }))}
-              className="rounded-md border border-slate-300 px-2 py-1 text-sm"
+              className="rounded-md border border-slate-300 px-2 py-1.5 text-sm"
             />
           )}
         </div>
@@ -318,14 +302,29 @@ export function LaunchForm({ launch }: { launch?: Launch }) {
 
       {error && <p className="rounded-md bg-rose-50 px-3 py-2 text-sm text-rose-700">{error}</p>}
 
-      <button
-        type="submit"
-        disabled={submitting}
-        className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
-      >
+      <Button type="submit" disabled={submitting}>
         {submitting ? "Saving…" : isEdit ? "Save & re-check" : "Create Launch"}
-      </button>
+      </Button>
     </form>
+  );
+}
+
+function ChannelSection({
+  title,
+  emoji,
+  children,
+}: {
+  title: string;
+  emoji: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <div className="rounded-lg border border-slate-200 p-4">
+      <p className="mb-3 flex items-center gap-1.5 text-sm font-medium text-slate-700">
+        <span>{emoji}</span> {title}
+      </p>
+      <div className="space-y-3">{children}</div>
+    </div>
   );
 }
 

@@ -7,6 +7,9 @@ product thinking (problem frame, persona, scope, roadmap) lives in
 [`outputs/`](outputs/); what changed in v1 specifically is in
 [`outputs/09-v1-notes/v1-build-notes.md`](outputs/09-v1-notes/v1-build-notes.md).
 
+**Live demo:** https://marketing-os-iota-rosy.vercel.app (code: `3141`) — deployed
+on Vercel's free tier. Source: https://github.com/RohanMAshlesh/marketing-os
+
 ## Run it
 
 ```bash

@@ -131,6 +131,12 @@ class LaunchStore {
     );
   }
 
+  /** Test-only: wipe and reseed so each test starts from a known state. */
+  resetForTests(): void {
+    this.launches.clear();
+    this.seed();
+  }
+
   get(id: string): Launch | undefined {
     return this.launches.get(id);
   }

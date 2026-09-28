@@ -14,8 +14,25 @@ npm install
 npm run dev
 ```
 
-Open http://localhost:3000. The dashboard comes pre-seeded with 3 example
-past launches so it's never empty.
+Open http://localhost:3000 — you'll land on the login screen first (this
+gates the whole app from the very first request, not just individual
+launches). The code is **3141**, the first four digits of pi, and it's
+stated right there on the screen since this is a demo gate, not real
+security. Once in, the dashboard comes pre-seeded with 3 example past
+launches so it's never empty.
+
+## Tests
+
+```bash
+npm test
+```
+
+39 automated tests (Vitest) covering the readiness engine, the approval/launch
+gating logic, the AI fallback behavior, the login endpoint, and — directly
+addressing "auth must be at the start" — a regression test proving every
+route redirects to `/login` on the very first request when there's no
+session, not just when opening a specific launch. Full breakdown, plus the
+manual QA pass done after the UI revamp, is in [`TESTING.md`](TESTING.md).
 
 ## Real email (optional)
 
@@ -42,13 +59,14 @@ fallback. To use real Claude generation instead, set `ANTHROPIC_API_KEY` in
 `.env.local` — **this is the one feature that costs real money per call** if
 enabled; everything else in the app stays $0 regardless.
 
-## Approval workflow (no login needed)
+## Approval workflow (role switcher, not real per-user accounts)
 
 Every channel's content must be **approved** before a Launch can fire.
-There's no real auth — instead, use the **"Viewing as"** switcher in the
-header to flip between **Campaign Manager** (creates/edits content, can't
-self-approve) and **Approver** (approves or requests changes) to demo both
-sides of the workflow yourself.
+The app-wide login above is just a demo gate, not per-user accounts, so
+inside the app use the **"Viewing as"** switcher in the header to flip
+between **Manager** (creates/edits content, can't self-approve) and
+**Approver** (approves or requests changes) to demo both sides of the
+workflow yourself.
 
 ## Demo script
 
@@ -66,21 +84,25 @@ sides of the workflow yourself.
 11. Go back to the dashboard to see it listed in history.
 
 ## Project structure
+- `src/middleware.ts` — the auth gate, applied to every route from the first request
 - `src/lib/types.ts` — data model
 - `src/lib/store.ts` — in-memory data store, seed data, launch scheduler/ticker, approval gating
 - `src/lib/readiness.ts` — the readiness-check rule engine
 - `src/lib/connectors.ts` — channel "sends" (real email, simulated WhatsApp/social)
 - `src/lib/ai.ts` — content drafting + status Q&A (real Claude call or free fallback)
 - `src/lib/role.ts` + `src/components/RoleSwitcher.tsx` — the manager/approver demo switcher
-- `src/app/api/launches/*`, `src/app/api/draft/*` — REST-ish API routes
+- `src/components/ui/*` — the small shared design system (Button, Badge, Card, Input/Textarea/Label)
+- `src/app/api/launches/*`, `src/app/api/draft/*`, `src/app/api/auth/*` — REST-ish API routes
 - `src/app/(pages)` + `src/components/LaunchForm.tsx` / `LaunchView.tsx` — UI
+- `src/**/*.test.ts` — the Vitest suite (see [`TESTING.md`](TESTING.md))
 
 ## Known shortcuts (by design, not oversights)
 See [`outputs/07-lite-prd/lite-prd.md`](outputs/07-lite-prd/lite-prd.md) →
 Assumptions & Shortcuts. In short: in-memory storage (resets on server
-restart), no auth, no real WhatsApp/social APIs, deterministic rule-based
-readiness checks (no live LLM call) — all deliberate choices to keep this
-genuinely free and demo-reliable.
+restart), a single shared demo login rather than real per-user accounts,
+no real WhatsApp/social APIs, deterministic rule-based readiness checks
+(no live LLM call) — all deliberate choices to keep this genuinely free
+and demo-reliable.
 
 ## Roadmap
 See [`outputs/05-concept-scope/concept-scope.md`](outputs/05-concept-scope/concept-scope.md)

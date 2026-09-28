@@ -13,5 +13,5 @@ export async function POST(req: NextRequest) {
   }
 
   const content = await draftContent(brief.trim(), channels);
-  return NextResponse.json({ content, usedRealAi: Boolean(process.env.ANTHROPIC_API_KEY) });
+  return NextResponse.json({ content, usedRealAi: Boolean(process.env.OPENROUTER_API_KEY) });
 }

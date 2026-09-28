@@ -3,7 +3,7 @@ import { answerLaunchQuestion, draftContent } from "./ai";
 import { Launch } from "./types";
 
 beforeEach(() => {
-  delete process.env.ANTHROPIC_API_KEY;
+  delete process.env.OPENROUTER_API_KEY;
 });
 
 describe("draftContent (template fallback, no API key)", () => {
